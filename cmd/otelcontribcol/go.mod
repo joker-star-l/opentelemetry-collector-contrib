@@ -34,6 +34,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/coralogixexporter v0.107.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/datadogexporter v0.107.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/datasetexporter v0.107.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/dorisexporter v0.107.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/elasticsearchexporter v0.107.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.107.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/googlecloudexporter v0.107.0
@@ -1355,3 +1356,5 @@ replace github.com/open-telemetry/opentelemetry-collector-contrib/receiver/otela
 replace github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/cfgardenobserver => ../../extension/observer/cfgardenobserver
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/rabbitmqexporter => ../../exporter/rabbitmqexporter
+
+replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/dorisexporter => ../../exporter/dorisexporter
