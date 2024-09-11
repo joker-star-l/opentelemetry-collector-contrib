@@ -4,7 +4,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/cmd/otelcontrib
 
 go 1.22.0
 
-toolchain go1.22.6
+toolchain go1.22.3
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/s3provider v0.107.0
@@ -634,7 +634,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/proxy v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/xray v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/collectd v0.107.0 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.107.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.107.1-0.20240827012220-5963d446ca4a // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/docker v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.107.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.107.0 // indirect
