@@ -70,7 +70,7 @@ func (r *streamLoadResponse) success() bool {
 }
 
 func (r *streamLoadResponse) error() bool {
-	return r.Status == "Failed" || r.Status == "Label Already Exists"
+	return r.Status == "Fail" || r.Status == "Label Already Exists"
 }
 
 func streamLoadURL(address string, db string, table string) string {
