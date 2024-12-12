@@ -207,9 +207,15 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 		return err
 	}
 
-	if !response.success() {
-		return fmt.Errorf("failed to push trace data: %s", response.Message)
+	if response.success() {
+		e.logger.Info("trace response:\n" + string(body))
+		return nil
 	}
 
-	return nil
+	if response.error() {
+		e.logger.Warn("failed to push trace data, response:\n" + string(body))
+		return nil
+	}
+
+	return fmt.Errorf("failed to push trace data, response:\n" + string(body))
 }
