@@ -69,6 +69,10 @@ func (r *streamLoadResponse) success() bool {
 	return r.Status == "Success" || r.Status == "Publish Timeout"
 }
 
+func (r *streamLoadResponse) error() bool {
+	return r.Status == "Failed" || r.Status == "Label Already Exists"
+}
+
 func streamLoadURL(address string, db string, table string) string {
 	return address + "/api/" + db + "/" + table + "/_stream_load"
 }
