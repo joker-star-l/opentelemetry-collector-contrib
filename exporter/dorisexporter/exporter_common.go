@@ -69,8 +69,9 @@ func (r *streamLoadResponse) success() bool {
 	return r.Status == "Success" || r.Status == "Publish Timeout"
 }
 
+// error but do not need to retry
 func (r *streamLoadResponse) error() bool {
-	return r.Status == "Fail" || r.Status == "Label Already Exists"
+	return (r.Status == "Fail" && r.ErrorURL != "") || r.Status == "Label Already Exists"
 }
 
 func streamLoadURL(address string, db string, table string) string {
