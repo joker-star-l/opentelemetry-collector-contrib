@@ -44,6 +44,8 @@ type Config struct {
 	TimeZone string `mapstructure:"timezone"`
 	// LogResponse is whether to log the response of doris stream load.
 	LogResponse bool `mapstructure:"log_response"`
+	// LabelPrefix is the prefix of the label in doris stream load.
+	LabelPrefix string `mapstructure:"label_prefix"`
 
 	// not in config file, will be set in Validate
 	timeLocation *time.Location `mapstructure:"-"`

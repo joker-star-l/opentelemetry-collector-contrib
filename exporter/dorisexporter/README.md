@@ -32,6 +32,7 @@ The following configuration options are supported:
 * `replication_num` (default = 1) The number of replicas of the table; ignored if `create_schema` is false.
 * `timezone` (default is the time zone of the opentelemetry collector if IANA Time Zone Database is found, else is UTC) The time zone of doris, e.g. Asia/Shanghai.
 * `log_response` (default = false) Whether to log the response of doris stream load.
+* `label_prefix` (default = open_telemetry) the prefix of the label in doris stream load. The final generated label is {label_prefix}{db}{table}{yyyyMMddHHmmss}{uuid}.
 * `sending_queue`  [details here](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/exporterhelper#configuration)
   * `enabled` (default = true)
   * `num_consumers` (default = 10) Number of consumers that dequeue batches; ignored if `enabled` is false.
