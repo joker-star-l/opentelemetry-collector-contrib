@@ -13,6 +13,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // for register database driver
+	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
@@ -75,6 +76,17 @@ func streamLoadURL(address string, db string, table string) string {
 	return address + "/api/" + db + "/" + table + "/_stream_load"
 }
 
+func label(cfg *Config, table string) string {
+	return fmt.Sprintf(
+		"%s_%s_%s_%s_%s",
+		cfg.LabelPrefix,
+		cfg.Database,
+		table,
+		time.Now().In(cfg.timeLocation).Format("20060102150405"),
+		uuid.New().String(),
+	)
+}
+
 func streamLoadRequest(ctx context.Context, cfg *Config, table string, data []byte) (*http.Request, error) {
 	url := streamLoadURL(cfg.Endpoint, cfg.Database, table)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(data))
@@ -85,6 +97,7 @@ func streamLoadRequest(ctx context.Context, cfg *Config, table string, data []by
 	req.Header.Set("format", "json")
 	req.Header.Set("Expect", "100-continue")
 	req.Header.Set("read_json_by_line", "true")
+	req.Header.Set("label", label(cfg, table))
 	if cfg.ClientConfig.Timeout != 0 {
 		req.Header.Set("timeout", fmt.Sprintf("%d", cfg.ClientConfig.Timeout/time.Second))
 	}

@@ -68,6 +68,7 @@ func TestLoadConfig(t *testing.T) {
 		ReplicationNum:    2,
 		TimeZone:          "Asia/Shanghai",
 		LogResponse:       true,
+		LabelPrefix:       "otel",
 	}
 	err = fullCfg.Validate()
 	require.NoError(t, err)
