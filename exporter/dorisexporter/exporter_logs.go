@@ -159,5 +159,5 @@ func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog) er
 		return nil
 	}
 
-	return fmt.Errorf("failed to push log data, response:\n" + string(body))
+	return fmt.Errorf("failed to push log data, response:%s", string(body))
 }
