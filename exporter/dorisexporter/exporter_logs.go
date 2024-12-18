@@ -150,7 +150,11 @@ func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog) er
 	}
 
 	if response.success() {
-		e.logger.Info("log response:\n" + string(body))
+		if e.cfg.LogResponse {
+			e.logger.Info("log response:\n" + string(body))
+		} else {
+			e.logger.Debug("log response:\n" + string(body))
+		}
 		return nil
 	}
 

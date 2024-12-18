@@ -45,6 +45,7 @@ func createDefaultConfig() component.Config {
 		CreateHistoryDays: 0,
 		ReplicationNum:    1,
 		TimeZone:          time.Local.String(),
+		LogResponse:       false,
 	}
 }
 
