@@ -46,6 +46,7 @@ func createDefaultConfig() component.Config {
 		ReplicationNum:    1,
 		TimeZone:          time.Local.String(),
 		LogResponse:       false,
+		LabelPrefix:       "open_telemetry",
 	}
 }
 
