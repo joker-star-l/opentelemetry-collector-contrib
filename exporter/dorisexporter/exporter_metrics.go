@@ -196,7 +196,11 @@ func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics me
 	}
 
 	if response.success() {
-		e.logger.Info("metric response:\n" + string(body))
+		if e.cfg.LogResponse {
+			e.logger.Info("metric response:\n" + string(body))
+		} else {
+			e.logger.Debug("metric response:\n" + string(body))
+		}
 		return nil
 	}
 

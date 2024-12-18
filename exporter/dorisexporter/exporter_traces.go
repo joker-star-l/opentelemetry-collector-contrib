@@ -208,7 +208,11 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 	}
 
 	if response.success() {
-		e.logger.Info("trace response:\n" + string(body))
+		if e.cfg.LogResponse {
+			e.logger.Info("trace response:\n" + string(body))
+		} else {
+			e.logger.Debug("trace response:\n" + string(body))
+		}
 		return nil
 	}
 
