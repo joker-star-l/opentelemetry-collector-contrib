@@ -67,6 +67,7 @@ func TestLoadConfig(t *testing.T) {
 		CreateHistoryDays: 0,
 		ReplicationNum:    2,
 		TimeZone:          "Asia/Shanghai",
+		LogResponse:       true,
 	}
 	err = fullCfg.Validate()
 	require.NoError(t, err)
