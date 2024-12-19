@@ -20,6 +20,7 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/orcaman/concurrent-map/v2 v2.0.1
 	go.opentelemetry.io/collector/component/componenttest v0.115.1-0.20241206185113-3f3e208e71b8
 	go.opentelemetry.io/collector/config/confighttp v0.115.1-0.20241206185113-3f3e208e71b8
 	go.opentelemetry.io/collector/exporter/exportertest v0.115.1-0.20241206185113-3f3e208e71b8

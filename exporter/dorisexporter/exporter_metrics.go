@@ -25,24 +25,83 @@ var ddls = []string{
 	metricsSummaryDDL,
 }
 
-func initMetricMap(maxLen int) map[pmetric.MetricType]metricModel {
-	return map[pmetric.MetricType]metricModel{
-		pmetric.MetricTypeGauge: &metricModelGauge{
-			data: make([]*dMetricGauge, 0, maxLen),
-		},
-		pmetric.MetricTypeSum: &metricModelSum{
-			data: make([]*dMetricSum, 0, maxLen),
-		},
-		pmetric.MetricTypeHistogram: &metricModelHistogram{
-			data: make([]*dMetricHistogram, 0, maxLen),
-		},
-		pmetric.MetricTypeExponentialHistogram: &metricModelExponentialHistogram{
-			data: make([]*dMetricExponentialHistogram, 0, maxLen),
-		},
-		pmetric.MetricTypeSummary: &metricModelSummary{
-			data: make([]*dMetricSummary, 0, maxLen),
-		},
+func initMetricMap(cfg *Config, ms pmetric.Metrics) map[pmetric.MetricType]metricModel {
+	metricMap := make(map[pmetric.MetricType]metricModel, 5)
+
+	gaugeLen := 0
+	sumLen := 0
+	histogramLen := 0
+	exponentialHistogramLen := 0
+	summaryLen := 0
+
+	rms := ms.ResourceMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rm := rms.At(i)
+		ilms := rm.ScopeMetrics()
+		for j := 0; j < ilms.Len(); j++ {
+			ilm := ilms.At(j)
+			ms := ilm.Metrics()
+			for k := 0; k < ms.Len(); k++ {
+				m := ms.At(k)
+				switch m.Type() {
+				case pmetric.MetricTypeGauge:
+					gaugeLen += m.Gauge().DataPoints().Len()
+				case pmetric.MetricTypeSum:
+					sumLen += m.Sum().DataPoints().Len()
+				case pmetric.MetricTypeHistogram:
+					histogramLen += m.Histogram().DataPoints().Len()
+				case pmetric.MetricTypeExponentialHistogram:
+					exponentialHistogramLen += m.ExponentialHistogram().DataPoints().Len()
+				case pmetric.MetricTypeSummary:
+					summaryLen += m.Summary().DataPoints().Len()
+				}
+			}
+		}
 	}
+
+	dataAddress := dataAddress(ms)
+
+	if gaugeLen > 0 {
+		gauge := &metricModelGauge{
+			data: make([]*dMetricGauge, 0, gaugeLen),
+		}
+		gauge.lbl = generateMetricLabel(gauge, cfg, dataAddress)
+		metricMap[pmetric.MetricTypeGauge] = gauge
+	}
+
+	if sumLen > 0 {
+		sum := &metricModelSum{
+			data: make([]*dMetricSum, 0, sumLen),
+		}
+		sum.lbl = generateMetricLabel(sum, cfg, dataAddress)
+		metricMap[pmetric.MetricTypeSum] = sum
+	}
+
+	if histogramLen > 0 {
+		histogram := &metricModelHistogram{
+			data: make([]*dMetricHistogram, 0, histogramLen),
+		}
+		histogram.lbl = generateMetricLabel(histogram, cfg, dataAddress)
+		metricMap[pmetric.MetricTypeHistogram] = histogram
+	}
+
+	if exponentialHistogramLen > 0 {
+		exponentialHistogram := &metricModelExponentialHistogram{
+			data: make([]*dMetricExponentialHistogram, 0, exponentialHistogramLen),
+		}
+		exponentialHistogram.lbl = generateMetricLabel(exponentialHistogram, cfg, dataAddress)
+		metricMap[pmetric.MetricTypeExponentialHistogram] = exponentialHistogram
+	}
+
+	if summaryLen > 0 {
+		summary := &metricModelSummary{
+			data: make([]*dMetricSummary, 0, summaryLen),
+		}
+		summary.lbl = generateMetricLabel(summary, cfg, dataAddress)
+		metricMap[pmetric.MetricTypeSummary] = summary
+	}
+
+	return metricMap
 }
 
 type metricsExporter struct {
@@ -96,7 +155,7 @@ func (e *metricsExporter) shutdown(_ context.Context) error {
 }
 
 func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics) error {
-	metricMap := initMetricMap(md.DataPointCount())
+	metricMap := initMetricMap(e.cfg, md)
 
 	for i := 0; i < md.ResourceMetrics().Len(); i++ {
 		resourceMetric := md.ResourceMetrics().At(i)
@@ -137,43 +196,42 @@ func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics
 		}
 	}
 
-	return e.pushMetricDataParallel(ctx, metricMap)
-}
-
-func (e *metricsExporter) pushMetricDataParallel(ctx context.Context, metricMap map[pmetric.MetricType]metricModel) error {
-	errChan := make(chan error, len(metricMap))
-	wg := &sync.WaitGroup{}
-	for _, m := range metricMap {
-		if m.size() <= 0 {
-			continue
-		}
-
-		wg.Add(1)
-		go func(m metricModel, wg *sync.WaitGroup) {
-			errChan <- e.pushMetricDataInternal(ctx, m)
-			wg.Done()
-		}(m, wg)
-	}
-	wg.Wait()
-	close(errChan)
+	dataAddress := dataAddress(md)
+	errMap := e.pushMetricDataParallel(ctx, metricMap)
 	var errs error
-	for err := range errChan {
-		errs = errors.Join(errs, err)
+	for _, m := range metricMap {
+		err := errMap[m.dataType()]
+		if err != nil {
+			addRetryData(m.dataType(), dataAddress, m.label())
+			errs = errors.Join(errs, err)
+		}
 	}
 	return errs
 }
 
-func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics metricModel) error {
-	if metrics.size() <= 0 {
-		return nil
-	}
+func (e *metricsExporter) pushMetricDataParallel(ctx context.Context, metricMap map[pmetric.MetricType]metricModel) map[dataType]error {
+	errMap := make(map[dataType]error, len(metricMap))
 
+	wg := &sync.WaitGroup{}
+	for _, m := range metricMap {
+		wg.Add(1)
+		go func(m metricModel, wg *sync.WaitGroup) {
+			errMap[m.dataType()] = e.pushMetricDataInternal(ctx, m)
+			wg.Done()
+		}(m, wg)
+	}
+	wg.Wait()
+
+	return errMap
+}
+
+func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics metricModel) error {
 	marshal, err := metrics.bytes()
 	if err != nil {
 		return err
 	}
 
-	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Metrics+metrics.tableSuffix(), marshal)
+	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Metrics+metrics.tableSuffix(), marshal, metrics.label())
 	if err != nil {
 		return err
 	}

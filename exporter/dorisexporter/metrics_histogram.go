@@ -32,6 +32,7 @@ type dMetricHistogram struct {
 
 type metricModelHistogram struct {
 	data []*dMetricHistogram
+	lbl  string
 }
 
 func (m *metricModelHistogram) metricType() pmetric.MetricType {
@@ -109,4 +110,12 @@ func (m *metricModelHistogram) size() int {
 
 func (m *metricModelHistogram) bytes() ([]byte, error) {
 	return json.Marshal(m.data)
+}
+
+func (m *metricModelHistogram) dataType() dataType {
+	return labelMetricHistogram
+}
+
+func (m *metricModelHistogram) label() string {
+	return m.lbl
 }

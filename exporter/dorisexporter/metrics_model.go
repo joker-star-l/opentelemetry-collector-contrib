@@ -12,6 +12,16 @@ type metricModel interface {
 	raw() any
 	size() int
 	bytes() ([]byte, error)
+	dataType() dataType
+	label() string
+}
+
+func generateMetricLabel(m metricModel, cfg *Config, dataAddress string) string {
+	label := popRetryData(m.dataType(), dataAddress)
+	if label == "" {
+		label = generateLabel(cfg, cfg.Table.Metrics+m.tableSuffix())
+	}
+	return label
 }
 
 // dMetric Basic Metric
