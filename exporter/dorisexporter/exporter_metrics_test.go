@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,14 +50,16 @@ func TestPushMetricData(t *testing.T) {
 	}
 
 	go func() {
+		mux := http.NewServeMux()
 		metrics := []string{"gauge", "sum", "histogram", "exponential_histogram", "summary"}
 		for _, metric := range metrics {
 			url := fmt.Sprintf("/api/otel/otel_metrics_%s/_stream_load", metric)
-			http.HandleFunc(url, func(w http.ResponseWriter, _ *http.Request) {
+			mux.HandleFunc(url, func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte(`{"Status":"Success"}`))
 			})
 		}
+		server.Handler = mux
 		err = server.ListenAndServe()
 		assert.Equal(t, http.ErrServerClosed, err)
 	}()
@@ -75,6 +78,107 @@ func TestPushMetricData(t *testing.T) {
 	require.NoError(t, err0)
 
 	_ = server.Shutdown(ctx)
+}
+
+func TestPushMetricDataRetry(t *testing.T) {
+	testFunc := func(m pmetric.MetricType, dt dataType) {
+		port, err := findRandomPort()
+		require.NoError(t, err)
+
+		config := createDefaultConfig().(*Config)
+		config.Endpoint = fmt.Sprintf("http://127.0.0.1:%d", port)
+		config.CreateSchema = false
+
+		err = config.Validate()
+		require.NoError(t, err)
+
+		exporter := newMetricsExporter(zap.NewNop(), config, componenttest.NewNopTelemetrySettings())
+
+		ctx := context.Background()
+
+		client, err := createDorisHTTPClient(ctx, config, nil, componenttest.NewNopTelemetrySettings())
+		require.NoError(t, err)
+		require.NotNil(t, client)
+
+		exporter.client = client
+
+		defer func() {
+			_ = exporter.shutdown(ctx)
+		}()
+
+		server := &http.Server{
+			ReadTimeout: 3 * time.Second,
+			Addr:        fmt.Sprintf(":%d", port),
+		}
+
+		times := 0
+		go func() {
+			mux := http.NewServeMux()
+			metrics := []string{"gauge", "sum", "histogram", "exponential_histogram", "summary"}
+			for _, metric := range metrics {
+				url := fmt.Sprintf("/api/otel/otel_metrics_%s/_stream_load", metric)
+				mux.HandleFunc(url, func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					times++
+					if times < 3 {
+						_, _ = w.Write([]byte(`{"Status":"Fail"}`))
+						return
+					}
+					_, _ = w.Write([]byte(`{"Status":"Success"}`))
+				})
+			}
+			server.Handler = mux
+			err = server.ListenAndServe()
+			assert.Equal(t, http.ErrServerClosed, err)
+		}()
+
+		isRetryError := func(err error) bool {
+			if err == nil {
+				return false
+			}
+			return strings.HasPrefix(err.Error(), "failed to push metric data, response:")
+		}
+
+		metrics := simpleMetrics(10, map[pmetric.MetricType]struct{}{
+			m: {},
+		})
+		dataAddress := dataAddress(metrics)
+		_, ok := retryMaps[dt].Get(dataAddress)
+		require.False(t, ok)
+
+		err0 := fmt.Errorf("Not Started")
+		for i := 0; !isRetryError(err0) && i < 10; i++ { // until server started
+			err0 = exporter.pushMetricData(ctx, metrics)
+			time.Sleep(100 * time.Millisecond)
+		}
+		require.True(t, isRetryError(err0))
+
+		label, ok := retryMaps[dt].Get(dataAddress)
+		require.True(t, ok)
+		require.NotEqual(t, "", label)
+
+		// first retry: fail
+		err0 = exporter.pushMetricData(ctx, metrics)
+		require.True(t, isRetryError(err0))
+
+		labelRetry, ok := retryMaps[dt].Get(dataAddress)
+		require.True(t, ok)
+		require.Equal(t, label, labelRetry)
+
+		// second retry: success
+		err0 = exporter.pushMetricData(ctx, metrics)
+		require.NoError(t, err0)
+		_, ok = retryMaps[dt].Get(dataAddress)
+		require.False(t, ok)
+
+		_ = server.Shutdown(ctx)
+	}
+
+	testFunc(pmetric.MetricTypeGauge, labelMetricGauge)
+	testFunc(pmetric.MetricTypeSum, labelMetricSum)
+	testFunc(pmetric.MetricTypeHistogram, labelMetricHistogram)
+	testFunc(pmetric.MetricTypeExponentialHistogram, labelMetricExponentialHistogram)
+	testFunc(pmetric.MetricTypeSummary, labelMetricSummary)
 }
 
 func simpleMetrics(count int, typeSet map[pmetric.MetricType]struct{}) pmetric.Metrics {

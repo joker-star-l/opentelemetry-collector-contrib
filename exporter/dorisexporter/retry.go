@@ -39,12 +39,12 @@ func dataAddress(data any) string {
 
 func addRetryData(t dataType, address string, label string) {
 	retryMaps[t].Set(address, label)
-	fmt.Printf("add {key: %s, value: %s}\n", address, label)
+	// fmt.Printf("add {key: %s, value: %s}\n", address, label)
 }
 
 func popRetryData(t dataType, address string) string {
 	label, ok := retryMaps[t].Pop(address)
-	fmt.Printf("pop {key: %s, value: %s}\n", address, label)
+	// fmt.Printf("pop {key: %s, value: %s}\n", address, label)
 	if !ok {
 		return ""
 	}
