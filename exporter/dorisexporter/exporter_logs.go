@@ -81,6 +81,11 @@ func (e *logsExporter) shutdown(_ context.Context) error {
 }
 
 func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
+	label := popRetryData(labelLog, dataAddress(ld))
+	if label == "" {
+		label = generateLabel(e.cfg, e.cfg.Table.Logs)
+	}
+
 	logs := make([]*dLog, 0, ld.LogRecordCount())
 
 	for i := 0; i < ld.ResourceLogs().Len(); i++ {
@@ -118,16 +123,20 @@ func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
 		}
 	}
 
-	return e.pushLogDataInternal(ctx, logs)
+	err := e.pushLogDataInternal(ctx, logs, label)
+	if err != nil {
+		addRetryData(labelLog, dataAddress(ld), label)
+	}
+	return err
 }
 
-func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog) error {
+func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog, label string) error {
 	marshal, err := toJSONLines(logs)
 	if err != nil {
 		return err
 	}
 
-	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Logs, marshal)
+	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Logs, marshal, label)
 	if err != nil {
 		return err
 	}

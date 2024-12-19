@@ -103,6 +103,11 @@ func (e *tracesExporter) shutdown(_ context.Context) error {
 }
 
 func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) error {
+	label := popRetryData(labelTrace, dataAddress(td))
+	if label == "" {
+		label = generateLabel(e.cfg, e.cfg.Table.Traces)
+	}
+
 	traces := make([]*dTrace, 0, td.SpanCount())
 
 	for i := 0; i < td.ResourceSpans().Len(); i++ {
@@ -176,16 +181,20 @@ func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) er
 		}
 	}
 
-	return e.pushTraceDataInternal(ctx, traces)
+	err := e.pushTraceDataInternal(ctx, traces, label)
+	if err != nil {
+		addRetryData(labelTrace, dataAddress(td), label)
+	}
+	return err
 }
 
-func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dTrace) error {
+func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dTrace, label string) error {
 	marshal, err := toJSONLines(traces)
 	if err != nil {
 		return err
 	}
 
-	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Traces, marshal)
+	req, err := streamLoadRequest(ctx, e.cfg, e.cfg.Table.Traces, marshal, label)
 	if err != nil {
 		return err
 	}
