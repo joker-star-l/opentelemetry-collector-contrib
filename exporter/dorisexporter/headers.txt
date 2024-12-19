@@ -1,0 +1,14 @@
+columns
+where
+max_filter_ratio
+partitions
+strict_mode
+exec_mem_limit
+jsonpaths
+json_root
+fuzzy_parse
+num_as_string
+send_batch_parallelism
+load_to_single_tablet
+comment
+memtable_on_sink_node
