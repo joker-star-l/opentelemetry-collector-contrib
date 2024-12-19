@@ -46,6 +46,8 @@ type Config struct {
 	LogResponse bool `mapstructure:"log_response"`
 	// LabelPrefix is the prefix of the label in doris stream load.
 	LabelPrefix string `mapstructure:"label_prefix"`
+	// Headers is the headers of doris stream load. Only headers that are in the whitelist can be added.
+	Headers map[string]string `mapstructure:"headers"`
 
 	// not in config file, will be set in Validate
 	timeLocation *time.Location `mapstructure:"-"`
