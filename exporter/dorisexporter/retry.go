@@ -8,6 +8,9 @@ import (
 	"strings"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 type dataType int
@@ -31,8 +34,8 @@ func init() {
 	}
 }
 
-// dataAddress returns the address of the orig in pmetric.Metrics, plog.Logs, or ptrace.Traces
-func dataAddress(data any) string {
+// dataAddress returns the address of the orig in plog.Logs, ptrace.Traces, or pmetric.Metrics
+func dataAddress[T plog.Logs | ptrace.Traces | pmetric.Metrics](data T) string {
 	s := fmt.Sprintf("%v", data)
 	return s[1:strings.Index(s, " ")]
 }
