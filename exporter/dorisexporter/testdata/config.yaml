@@ -19,6 +19,10 @@ doris/full:
   timeout: 5s
   label_prefix: otel
   log_response: true
+  headers:
+    max_filter_ratio: "0.1"
+    strict_mode: "true"
+    group_commit: "async_mode"
   sending_queue:
     enabled: true
     num_consumers: 10

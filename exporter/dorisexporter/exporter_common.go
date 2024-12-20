@@ -97,7 +97,10 @@ func streamLoadRequest(ctx context.Context, cfg *Config, table string, data []by
 	req.Header.Set("format", "json")
 	req.Header.Set("Expect", "100-continue")
 	req.Header.Set("read_json_by_line", "true")
-	req.Header.Set("label", label)
+	groupCommit := string(cfg.Headers["group_commit"])
+	if groupCommit == "" || groupCommit == "off_mode" {
+		req.Header.Set("label", label)
+	}
 	if cfg.ClientConfig.Timeout != 0 {
 		req.Header.Set("timeout", fmt.Sprintf("%d", cfg.ClientConfig.Timeout/time.Second))
 	}
