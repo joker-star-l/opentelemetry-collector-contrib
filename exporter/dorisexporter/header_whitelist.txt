@@ -1,0 +1,15 @@
+columns
+comment
+exec_mem_limit
+fuzzy_parse
+group_commit
+json_root
+jsonpaths
+load_to_single_tablet
+max_filter_ratio
+memtable_on_sink_node
+num_as_string
+partitions
+send_batch_parallelism
+strict_mode
+where

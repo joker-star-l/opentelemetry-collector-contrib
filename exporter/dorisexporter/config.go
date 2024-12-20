@@ -4,9 +4,11 @@
 package dorisexporter // import "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/dorisexporter"
 
 import (
+	_ "embed" // for headers file embedding
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -16,6 +18,7 @@ import (
 )
 
 type Config struct {
+	// confighttp.ClientConfig.Headers is the headers of doris stream load. Only headers that are in the whitelist can be added.
 	confighttp.ClientConfig   `mapstructure:",squash"`
 	configretry.BackOffConfig `mapstructure:"retry_on_failure"`
 	QueueSettings             exporterhelper.QueueConfig `mapstructure:"sending_queue"`
@@ -46,8 +49,6 @@ type Config struct {
 	LogResponse bool `mapstructure:"log_response"`
 	// LabelPrefix is the prefix of the label in doris stream load.
 	LabelPrefix string `mapstructure:"label_prefix"`
-	// Headers is the headers of doris stream load. Only headers that are in the whitelist can be added.
-	Headers map[string]string `mapstructure:"headers"`
 
 	// not in config file, will be set in Validate
 	timeLocation *time.Location `mapstructure:"-"`
@@ -61,6 +62,9 @@ type Table struct {
 	// Metrics is the table name for metrics.
 	Metrics string `mapstructure:"metrics"`
 }
+
+//go:embed header_whitelist.txt
+var headerWhitelist string
 
 func (cfg *Config) Validate() (err error) {
 	if cfg.Endpoint == "" {
@@ -107,6 +111,23 @@ func (cfg *Config) Validate() (err error) {
 	cfg.timeLocation, errT = time.LoadLocation(cfg.TimeZone)
 	if errT != nil {
 		err = errors.Join(err, errors.New("invalid timezone"))
+	}
+
+	// check headers
+	headerWhiteSet := make(map[string]struct{})
+	headers := strings.Split(strings.TrimSpace(headerWhitelist), "\n")
+	for _, header := range headers {
+		headerWhiteSet[header] = struct{}{}
+	}
+	illegalHeaders := make([]string, 0)
+	for header := range cfg.Headers {
+		_, ok := headerWhiteSet[header]
+		if !ok {
+			illegalHeaders = append(illegalHeaders, header)
+		}
+	}
+	if len(illegalHeaders) > 0 {
+		err = errors.Join(err, fmt.Errorf("illegal headers: %v", illegalHeaders))
 	}
 
 	return err
