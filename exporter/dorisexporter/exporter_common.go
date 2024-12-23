@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // for register database driver
@@ -69,7 +70,7 @@ func (r *streamLoadResponse) success() bool {
 
 // error but do not need to retry
 func (r *streamLoadResponse) error() bool {
-	return (r.Status == "Fail" && r.ErrorURL != "") || r.Status == "Label Already Exists"
+	return (r.Status == "Fail" && strings.HasPrefix(r.Message, "[DATA_QUALITY_ERROR]")) || r.Status == "Label Already Exists"
 }
 
 func streamLoadURL(address string, db string, table string) string {
