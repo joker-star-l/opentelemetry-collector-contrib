@@ -1,0 +1,62 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+      http:
+        endpoint: localhost:4318
+
+processors:
+  batch:
+
+exporters:
+  file:
+    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_log.out
+  file/2:
+    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_trace.out
+  file/3:
+    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_metric.out
+  doris:
+    endpoint: http://localhost:8030
+    database: otel
+    username: admin
+    password: admin
+    table:
+      logs: otel_logs
+      traces: otel_traces
+      metrics: otel_metrics
+    create_schema: true
+    mysql_endpoint: localhost:9030
+    history_days: 14
+    create_history_days: 10
+    replication_num: 1
+    timezone: Asia/Shanghai
+    timeout: 60s
+    log_response: true
+    label_prefix: otel
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 1000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    headers:
+      strict_mode: "true"
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [doris, file]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [doris, file/2]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [doris, file/3]
