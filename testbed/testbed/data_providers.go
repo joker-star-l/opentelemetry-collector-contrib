@@ -113,6 +113,7 @@ func (dp *perfTestDataProvider) GenerateMetrics() (pmetric.Metrics, bool) {
 		for j := 0; j < dataPointsPerMetric; j++ {
 			dataPoint := dps.AppendEmpty()
 			dataPoint.SetStartTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+			dataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
 			value := dp.dataItemsGenerated.Add(1)
 			dataPoint.SetIntValue(int64(value))
 			dataPoint.Attributes().PutStr("item_index", "item_"+strconv.Itoa(j))
