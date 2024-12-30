@@ -49,6 +49,8 @@ type Config struct {
 	LogResponse bool `mapstructure:"log_response"`
 	// LabelPrefix is the prefix of the label in doris stream load.
 	LabelPrefix string `mapstructure:"label_prefix"`
+	// ProgressInterval is the interval of the progress reporter.
+	LogProgressInterval int `mapstructure:"log_progress_interval"`
 
 	// not in config file, will be set in Validate
 	timeLocation *time.Location `mapstructure:"-"`

@@ -29,14 +29,16 @@ type commonExporter struct {
 	logger   *zap.Logger
 	cfg      *Config
 	timeZone *time.Location
+	reporter *progressReporter
 }
 
-func newExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings) *commonExporter {
+func newExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings, reporterName string) *commonExporter {
 	return &commonExporter{
 		TelemetrySettings: set,
 		logger:            logger,
 		cfg:               cfg,
 		timeZone:          cfg.timeLocation,
+		reporter:          newProgressReporter(reporterName, cfg.LogProgressInterval, logger),
 	}
 }
 

@@ -42,7 +42,7 @@ type logsExporter struct {
 
 func newLogsExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings) *logsExporter {
 	return &logsExporter{
-		commonExporter: newExporter(logger, cfg, set),
+		commonExporter: newExporter(logger, cfg, set, "LOG"),
 	}
 }
 
@@ -70,7 +70,12 @@ func (e *logsExporter) start(ctx context.Context, host component.Host) error {
 
 	ddl := fmt.Sprintf(logsDDL, e.cfg.Table.Logs, e.cfg.propertiesStr())
 	_, err = conn.ExecContext(ctx, ddl)
-	return err
+	if err != nil {
+		return err
+	}
+
+	go e.reporter.report()
+	return nil
 }
 
 func (e *logsExporter) shutdown(_ context.Context) error {
@@ -159,6 +164,9 @@ func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog, la
 	}
 
 	if response.success() {
+		e.reporter.incrTotalRows(int64(len(logs)))
+		e.reporter.incrTotalBytes(int64(len(marshal)))
+
 		if e.cfg.LogResponse {
 			e.logger.Info("log response:\n" + string(body))
 		} else {
@@ -168,6 +176,8 @@ func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog, la
 	}
 
 	if response.error() {
+		e.reporter.incrFailedRows(int64(len(logs)))
+
 		e.logger.Warn("failed to push log data, response:\n" + string(body))
 		return nil
 	}

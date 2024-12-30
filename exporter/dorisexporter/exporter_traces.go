@@ -64,7 +64,7 @@ type tracesExporter struct {
 
 func newTracesExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings) *tracesExporter {
 	return &tracesExporter{
-		commonExporter: newExporter(logger, cfg, set),
+		commonExporter: newExporter(logger, cfg, set, "TRACE"),
 	}
 }
 
@@ -92,7 +92,12 @@ func (e *tracesExporter) start(ctx context.Context, host component.Host) error {
 
 	ddl := fmt.Sprintf(tracesDDL, e.cfg.Table.Traces, e.cfg.propertiesStr())
 	_, err = conn.ExecContext(ctx, ddl)
-	return err
+	if err != nil {
+		return err
+	}
+
+	go e.reporter.report()
+	return nil
 }
 
 func (e *tracesExporter) shutdown(_ context.Context) error {
@@ -217,6 +222,9 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 	}
 
 	if response.success() {
+		e.reporter.incrTotalRows(int64(len(traces)))
+		e.reporter.incrTotalBytes(int64(len(marshal)))
+
 		if e.cfg.LogResponse {
 			e.logger.Info("trace response:\n" + string(body))
 		} else {
@@ -226,6 +234,8 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 	}
 
 	if response.error() {
+		e.reporter.incrFailedRows(int64(len(traces)))
+
 		e.logger.Warn("failed to push trace data, response:\n" + string(body))
 		return nil
 	}

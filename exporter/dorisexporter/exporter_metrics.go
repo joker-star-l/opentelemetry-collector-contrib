@@ -110,7 +110,7 @@ type metricsExporter struct {
 
 func newMetricsExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings) *metricsExporter {
 	return &metricsExporter{
-		commonExporter: newExporter(logger, cfg, set),
+		commonExporter: newExporter(logger, cfg, set, "METRIC"),
 	}
 }
 
@@ -144,6 +144,7 @@ func (e *metricsExporter) start(ctx context.Context, host component.Host) error 
 		}
 	}
 
+	go e.reporter.report()
 	return nil
 }
 
@@ -254,6 +255,9 @@ func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics me
 	}
 
 	if response.success() {
+		e.reporter.incrTotalRows(int64(metrics.size()))
+		e.reporter.incrTotalBytes(int64(len(marshal)))
+
 		if e.cfg.LogResponse {
 			e.logger.Info("metric response:\n" + string(body))
 		} else {
@@ -263,6 +267,8 @@ func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics me
 	}
 
 	if response.error() {
+		e.reporter.incrFailedRows(int64(metrics.size()))
+
 		e.logger.Warn("failed to push metric data, response:\n" + string(body))
 		return nil
 	}
