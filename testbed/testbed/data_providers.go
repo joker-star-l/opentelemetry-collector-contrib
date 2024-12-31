@@ -60,8 +60,8 @@ func (dp *perfTestDataProvider) GenerateTraces() (ptrace.Traces, bool) {
 
 	traceID := dp.traceIDSequence.Add(1)
 	for i := 0; i < dp.options.ItemsPerBatch; i++ {
-		startTime := time.Now().Add(time.Duration(-i-int(traceID)*1000) * time.Second)
-		endTime := startTime.Add(time.Millisecond)
+		startTime := time.Now().Add(time.Duration(-i*int(time.Second)) * time.Second)
+		endTime := time.Now()
 
 		spanID := dp.dataItemsGenerated.Add(1)
 
