@@ -10,12 +10,12 @@ processors:
   batch:
 
 exporters:
-  file:
-    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_log.out
-  file/2:
-    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_trace.out
-  file/3:
-    path: /home/liumx/GoProjects/opentelemetry-collector-contrib_dev/exporter/dorisexporter/loadgenerator/debug_metric.out
+  # file:
+  #   path: ./debug_log.out
+  # file/2:
+  #   path: ./debug_trace.out
+  # file/3:
+  #   path: ./debug_metric.out
   doris:
     endpoint: http://localhost:8030
     database: otel
@@ -51,12 +51,15 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [doris, file]
+      exporters: [doris]
+      # exporters: [doris, file]
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [doris, file/2]
+      exporters: [doris]
+      # exporters: [doris, file/2]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [doris, file/3]
+      exporters: [doris]
+      # exporters: [doris, file/3]
