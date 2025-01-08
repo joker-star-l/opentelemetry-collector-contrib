@@ -12,6 +12,7 @@ import (
 )
 
 type Config struct {
+	Host      string
 	Port      int
 	Duration  int
 	Speed     int
@@ -21,6 +22,7 @@ type Config struct {
 }
 
 func parse(cfg *Config) {
+	flag.StringVar(&cfg.Host, "host", "0.0.0.0", "The host to send data to")
 	flag.IntVar(&cfg.Port, "port", 4318, "The port to send data to")
 	flag.IntVar(&cfg.Duration, "duration", 10, "The duration of the test in seconds")
 	flag.IntVar(&cfg.Speed, "speed", 100, "The speed of the test in items per second")
@@ -44,11 +46,11 @@ func main() {
 
 	var sender testbed.DataSender
 	if cfg.Type == "log" {
-		sender = testbed.NewOTLPHTTPLogsDataSender("0.0.0.0", cfg.Port)
+		sender = testbed.NewOTLPHTTPLogsDataSender(cfg.Host, cfg.Port)
 	} else if cfg.Type == "trace" {
-		sender = testbed.NewOTLPHTTPTraceDataSender("0.0.0.0", cfg.Port, "none")
+		sender = testbed.NewOTLPHTTPTraceDataSender(cfg.Host, cfg.Port, "none")
 	} else if cfg.Type == "metric" {
-		sender = testbed.NewOTLPHTTPMetricDataSender("0.0.0.0", cfg.Port)
+		sender = testbed.NewOTLPHTTPMetricDataSender(cfg.Host, cfg.Port)
 	} else {
 		panic("Invalid type")
 	}

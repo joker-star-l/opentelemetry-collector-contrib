@@ -1,1 +1,1 @@
-./main -port 4318 -duration 10 -speed 1000 -batchsize 1000 -parallel 1 -type trace
+./main -host localhost -port 4318 -duration 10 -speed 100 -batchsize 100 -parallel 1 -type log
