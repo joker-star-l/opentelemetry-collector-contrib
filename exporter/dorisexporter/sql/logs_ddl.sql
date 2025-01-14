@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS %s
     INDEX idx_scope_version(scope_version) USING INVERTED
 )
 ENGINE = OLAP
-DUPLICATE KEY(service_name, timestamp)
+DUPLICATE KEY(timestamp, service_name)
 PARTITION BY RANGE(timestamp) ()
 DISTRIBUTED BY RANDOM BUCKETS AUTO
 %s;
