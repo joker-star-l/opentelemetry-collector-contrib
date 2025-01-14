@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS %s
 (
-    service_name          VARCHAR(200),
     timestamp             DATETIME(6),
+    service_name          VARCHAR(200),
     trace_id              VARCHAR(200),
     span_id               STRING,
     severity_number       INT,
