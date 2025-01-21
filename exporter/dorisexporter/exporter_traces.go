@@ -76,25 +76,23 @@ func (e *tracesExporter) start(ctx context.Context, host component.Host) error {
 	}
 	e.client = client
 
-	if !e.cfg.CreateSchema {
-		return nil
-	}
+	if e.cfg.CreateSchema {
+		conn, err := createDorisMySQLClient(e.cfg)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
 
-	conn, err := createDorisMySQLClient(e.cfg)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
+		err = createAndUseDatabase(ctx, conn, e.cfg)
+		if err != nil {
+			return err
+		}
 
-	err = createAndUseDatabase(ctx, conn, e.cfg)
-	if err != nil {
-		return err
-	}
-
-	ddl := fmt.Sprintf(tracesDDL, e.cfg.Table.Traces, e.cfg.propertiesStr())
-	_, err = conn.ExecContext(ctx, ddl)
-	if err != nil {
-		return err
+		ddl := fmt.Sprintf(tracesDDL, e.cfg.Table.Traces, e.cfg.propertiesStr())
+		_, err = conn.ExecContext(ctx, ddl)
+		if err != nil {
+			return err
+		}
 	}
 
 	go e.reporter.report()

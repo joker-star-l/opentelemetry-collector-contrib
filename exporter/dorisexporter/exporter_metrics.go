@@ -121,26 +121,24 @@ func (e *metricsExporter) start(ctx context.Context, host component.Host) error 
 	}
 	e.client = client
 
-	if !e.cfg.CreateSchema {
-		return nil
-	}
-
-	conn, err := createDorisMySQLClient(e.cfg)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	err = createAndUseDatabase(ctx, conn, e.cfg)
-	if err != nil {
-		return err
-	}
-
-	for _, ddlTemplate := range ddls {
-		ddl := fmt.Sprintf(ddlTemplate, e.cfg.Table.Metrics, e.cfg.propertiesStr())
-		_, err = conn.ExecContext(ctx, ddl)
+	if e.cfg.CreateSchema {
+		conn, err := createDorisMySQLClient(e.cfg)
 		if err != nil {
 			return err
+		}
+		defer conn.Close()
+
+		err = createAndUseDatabase(ctx, conn, e.cfg)
+		if err != nil {
+			return err
+		}
+
+		for _, ddlTemplate := range ddls {
+			ddl := fmt.Sprintf(ddlTemplate, e.cfg.Table.Metrics, e.cfg.propertiesStr())
+			_, err = conn.ExecContext(ctx, ddl)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
