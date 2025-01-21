@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS %s
 (
     timestamp             DATETIME(6),
     service_name          VARCHAR(200),
+    service_instance_id   VARCHAR(200),
     trace_id              VARCHAR(200),
     span_id               STRING,
     severity_number       INT,
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS %s
     scope_version         STRING,
     INDEX idx_service_name(service_name) USING INVERTED,
     INDEX idx_timestamp(timestamp) USING INVERTED,
+    INDEX idx_service_instance_id(service_instance_id) USING INVERTED,
     INDEX idx_trace_id(trace_id) USING INVERTED,
     INDEX idx_span_id(span_id) USING INVERTED,
     INDEX idx_severity_number(severity_number) USING INVERTED,
