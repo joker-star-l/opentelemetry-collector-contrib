@@ -25,6 +25,7 @@ var logsDDL string
 type dLog struct {
 	ServiceName        string         `json:"service_name"`
 	Timestamp          string         `json:"timestamp"`
+	ServiceInstanceID  string         `json:"service_instance_id"`
 	TraceID            string         `json:"trace_id"`
 	SpanID             string         `json:"span_id"`
 	SeverityNumber     int32          `json:"severity_number"`
@@ -102,6 +103,11 @@ func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
 		if ok {
 			serviceName = v.AsString()
 		}
+		serviceInstance := ""
+		v, ok = resourceAttributes.Get(semconv.AttributeServiceInstanceID)
+		if ok {
+			serviceInstance = v.AsString()
+		}
 
 		for j := 0; j < resourceLogs.ScopeLogs().Len(); j++ {
 			scopeLogs := resourceLogs.ScopeLogs().At(j)
@@ -112,6 +118,7 @@ func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
 				log := &dLog{
 					ServiceName:        serviceName,
 					Timestamp:          e.formatTime(logRecord.Timestamp().AsTime()),
+					ServiceInstanceID:  serviceInstance,
 					TraceID:            traceutil.TraceIDToHexOrEmptyString(logRecord.TraceID()),
 					SpanID:             traceutil.SpanIDToHexOrEmptyString(logRecord.SpanID()),
 					SeverityNumber:     int32(logRecord.SeverityNumber()),

@@ -167,6 +167,11 @@ func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics
 		if ok {
 			serviceName = v.AsString()
 		}
+		serviceInstance := ""
+		v, ok = resourceAttributes.Get(semconv.AttributeServiceInstanceID)
+		if ok {
+			serviceInstance = v.AsString()
+		}
 
 		for j := 0; j < resourceMetric.ScopeMetrics().Len(); j++ {
 			scopeMetric := resourceMetric.ScopeMetrics().At(j)
@@ -176,6 +181,7 @@ func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics
 
 				dm := &dMetric{
 					ServiceName:        serviceName,
+					ServiceInstanceID:  serviceInstance,
 					MetricName:         metric.Name(),
 					MetricDescription:  metric.Description(),
 					MetricUnit:         metric.Unit(),
