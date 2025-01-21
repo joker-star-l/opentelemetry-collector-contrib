@@ -21,6 +21,9 @@ import (
 //go:embed sql/logs_ddl.sql
 var logsDDL string
 
+//go:embed sql/logs_view.sql
+var logsView string
+
 // dLog Log to Doris
 type dLog struct {
 	ServiceName        string         `json:"service_name"`
@@ -70,6 +73,12 @@ func (e *logsExporter) start(ctx context.Context, host component.Host) error {
 		_, err = conn.ExecContext(ctx, ddl)
 		if err != nil {
 			return err
+		}
+
+		view := fmt.Sprintf(logsView, e.cfg.Table.Logs, e.cfg.Table.Logs)
+		_, err = conn.ExecContext(ctx, view)
+		if err != nil {
+			e.logger.Warn("failed to create materialized view", zap.Error(err))
 		}
 	}
 

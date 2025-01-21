@@ -21,6 +21,9 @@ import (
 //go:embed sql/traces_ddl.sql
 var tracesDDL string
 
+//go:embed sql/traces_view.sql
+var tracesView string
+
 // dTrace Trace to Doris
 type dTrace struct {
 	ServiceName        string         `json:"service_name"`
@@ -92,6 +95,12 @@ func (e *tracesExporter) start(ctx context.Context, host component.Host) error {
 		_, err = conn.ExecContext(ctx, ddl)
 		if err != nil {
 			return err
+		}
+
+		view := fmt.Sprintf(tracesView, e.cfg.Table.Traces, e.cfg.Table.Traces)
+		_, err = conn.ExecContext(ctx, view)
+		if err != nil {
+			e.logger.Warn("failed to create materialized view", zap.Error(err))
 		}
 	}
 
