@@ -25,6 +25,7 @@ var tracesDDL string
 type dTrace struct {
 	ServiceName        string         `json:"service_name"`
 	Timestamp          string         `json:"timestamp"`
+	ServiceInstanceID  string         `json:"service_instance_id"`
 	TraceID            string         `json:"trace_id"`
 	SpanID             string         `json:"span_id"`
 	TraceState         string         `json:"trace_state"`
@@ -124,6 +125,11 @@ func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) er
 		if ok {
 			serviceName = v.AsString()
 		}
+		serviceInstance := ""
+		v, ok = resourceAttributes.Get(semconv.AttributeServiceInstanceID)
+		if ok {
+			serviceInstance = v.AsString()
+		}
 
 		for j := 0; j < resourceSpan.ScopeSpans().Len(); j++ {
 			scopeSpan := resourceSpan.ScopeSpans().At(j)
@@ -163,6 +169,7 @@ func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) er
 				trace := &dTrace{
 					ServiceName:        serviceName,
 					Timestamp:          e.formatTime(span.StartTimestamp().AsTime()),
+					ServiceInstanceID:  serviceInstance,
 					TraceID:            traceutil.TraceIDToHexOrEmptyString(span.TraceID()),
 					SpanID:             traceutil.SpanIDToHexOrEmptyString(span.SpanID()),
 					TraceState:         span.TraceState().AsRaw(),
