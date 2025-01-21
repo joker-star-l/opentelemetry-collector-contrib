@@ -5,6 +5,7 @@ package dorisexporter // import "github.com/open-telemetry/opentelemetry-collect
 
 import (
 	"context"
+	_ "embed" // for SQL file embedding
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +25,9 @@ var ddls = []string{
 	metricsExponentialHistogramDDL,
 	metricsSummaryDDL,
 }
+
+//go:embed sql/metrics_view.sql
+var metricsView string
 
 func initMetricMap(cfg *Config, ms pmetric.Metrics) map[pmetric.MetricType]metricModel {
 	metricMap := make(map[pmetric.MetricType]metricModel, 5)
@@ -138,6 +142,23 @@ func (e *metricsExporter) start(ctx context.Context, host component.Host) error 
 			_, err = conn.ExecContext(ctx, ddl)
 			if err != nil {
 				return err
+			}
+		}
+
+		models := []metricModel{
+			&metricModelGauge{},
+			&metricModelSum{},
+			&metricModelHistogram{},
+			&metricModelExponentialHistogram{},
+			&metricModelSummary{},
+		}
+
+		for _, model := range models {
+			table := e.cfg.Table.Metrics + model.tableSuffix()
+			view := fmt.Sprintf(metricsView, table, table)
+			_, err = conn.ExecContext(ctx, view)
+			if err != nil {
+				e.logger.Warn("failed to create materialized view", zap.Error(err))
 			}
 		}
 	}
