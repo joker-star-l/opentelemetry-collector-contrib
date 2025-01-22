@@ -226,7 +226,7 @@ func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) er
 }
 
 func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dTrace, label string) error {
-	marshal, err := toJsonLines(traces)
+	marshal, err := toJSONLines(traces)
 	if err != nil {
 		return err
 	}

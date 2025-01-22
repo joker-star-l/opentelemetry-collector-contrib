@@ -84,7 +84,7 @@ func (m *metricModelGauge) size() int {
 }
 
 func (m *metricModelGauge) bytes() ([]byte, error) {
-	return toJsonLines(m.data)
+	return toJSONLines(m.data)
 }
 
 func (m *metricModelGauge) dataType() dataType {

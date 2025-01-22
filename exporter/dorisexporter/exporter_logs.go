@@ -150,7 +150,7 @@ func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
 }
 
 func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog, label string) error {
-	marshal, err := toJsonLines(logs)
+	marshal, err := toJSONLines(logs)
 	if err != nil {
 		return err
 	}
