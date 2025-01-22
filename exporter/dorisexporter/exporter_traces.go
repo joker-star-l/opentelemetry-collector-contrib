@@ -24,6 +24,12 @@ var tracesDDL string
 //go:embed sql/traces_view.sql
 var tracesView string
 
+//go:embed sql/traces_graph_ddl.sql
+var tracesGraphDDL string
+
+//go:embed sql/traces_graph_job.sql
+var tracesGraphJob string
+
 // dTrace Trace to Doris
 type dTrace struct {
 	ServiceName        string         `json:"service_name"`
@@ -101,6 +107,18 @@ func (e *tracesExporter) start(ctx context.Context, host component.Host) error {
 		_, err = conn.ExecContext(ctx, view)
 		if err != nil {
 			e.logger.Warn("failed to create materialized view", zap.Error(err))
+		}
+
+		ddl = fmt.Sprintf(tracesGraphDDL, e.cfg.Table.Traces, e.cfg.propertiesStr())
+		_, err = conn.ExecContext(ctx, ddl)
+		if err != nil {
+			return err
+		}
+
+		job := e.formatTraceGraphJob()
+		_, err = conn.ExecContext(ctx, job)
+		if err != nil {
+			e.logger.Warn("failed to create job", zap.Error(err))
 		}
 	}
 
@@ -255,4 +273,15 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 	}
 
 	return fmt.Errorf("failed to push trace data, response:%s", string(body))
+}
+
+func (e *tracesExporter) formatTraceGraphJob() string {
+	return fmt.Sprintf(
+		tracesGraphJob,
+		e.cfg.Database,
+		e.cfg.Table.Traces,
+		e.cfg.Table.Traces,
+		e.cfg.Table.Traces,
+		e.cfg.Table.Traces,
+	)
 }
