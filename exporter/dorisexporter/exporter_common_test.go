@@ -67,7 +67,7 @@ func findRandomPort() (int, error) {
 	return port, nil
 }
 
-func TestToJsonLines(t *testing.T) {
+func TestToJSONLines(t *testing.T) {
 	logs, err := toJSONLines([]*dLog{
 		{}, {},
 	})
