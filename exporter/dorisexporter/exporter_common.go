@@ -15,7 +15,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql" // for register database driver
 	"github.com/google/uuid"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/pdata/plog"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +34,8 @@ type commonExporter struct {
 	cfg      *Config
 	timeZone *time.Location
 	reporter *progressReporter
+
+	retryMap cmap.ConcurrentMap[string, string]
 }
 
 func newExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySettings, reporterName string) *commonExporter {
@@ -39,11 +45,30 @@ func newExporter(logger *zap.Logger, cfg *Config, set component.TelemetrySetting
 		cfg:               cfg,
 		timeZone:          cfg.timeLocation,
 		reporter:          newProgressReporter(reporterName, cfg.LogProgressInterval, logger),
+		retryMap:          cmap.New[string](),
 	}
 }
 
 func (e *commonExporter) formatTime(t time.Time) string {
 	return t.In(e.timeZone).Format(timeFormat)
+}
+
+func (e *commonExporter) addRetryData(address string, label string) {
+	e.retryMap.Set(address, label)
+}
+
+func (e *commonExporter) popRetryData(address string) string {
+	label, ok := e.retryMap.Pop(address)
+	if !ok {
+		return ""
+	}
+	return label
+}
+
+// dataAddress returns the address of the orig in plog.Logs, ptrace.Traces, or pmetric.Metrics
+func dataAddress[T plog.Logs | ptrace.Traces | pmetric.Metrics](data T) string {
+	s := fmt.Sprintf("%v", data)
+	return s[1:strings.Index(s, " ")]
 }
 
 type streamLoadResponse struct {

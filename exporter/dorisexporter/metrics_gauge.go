@@ -87,10 +87,6 @@ func (m *metricModelGauge) bytes() ([]byte, error) {
 	return toJSONLines(m.data)
 }
 
-func (m *metricModelGauge) dataType() dataType {
-	return labelMetricGauge
-}
-
 func (m *metricModelGauge) label() string {
 	return m.lbl
 }

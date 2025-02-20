@@ -29,85 +29,6 @@ var ddls = []string{
 //go:embed sql/metrics_view.sql
 var metricsView string
 
-func initMetricMap(cfg *Config, ms pmetric.Metrics) map[pmetric.MetricType]metricModel {
-	metricMap := make(map[pmetric.MetricType]metricModel, 5)
-
-	gaugeLen := 0
-	sumLen := 0
-	histogramLen := 0
-	exponentialHistogramLen := 0
-	summaryLen := 0
-
-	rms := ms.ResourceMetrics()
-	for i := 0; i < rms.Len(); i++ {
-		rm := rms.At(i)
-		ilms := rm.ScopeMetrics()
-		for j := 0; j < ilms.Len(); j++ {
-			ilm := ilms.At(j)
-			ms := ilm.Metrics()
-			for k := 0; k < ms.Len(); k++ {
-				m := ms.At(k)
-				switch m.Type() {
-				case pmetric.MetricTypeGauge:
-					gaugeLen += m.Gauge().DataPoints().Len()
-				case pmetric.MetricTypeSum:
-					sumLen += m.Sum().DataPoints().Len()
-				case pmetric.MetricTypeHistogram:
-					histogramLen += m.Histogram().DataPoints().Len()
-				case pmetric.MetricTypeExponentialHistogram:
-					exponentialHistogramLen += m.ExponentialHistogram().DataPoints().Len()
-				case pmetric.MetricTypeSummary:
-					summaryLen += m.Summary().DataPoints().Len()
-				}
-			}
-		}
-	}
-
-	dataAddress := dataAddress(ms)
-
-	if gaugeLen > 0 {
-		gauge := &metricModelGauge{
-			data: make([]*dMetricGauge, 0, gaugeLen),
-		}
-		gauge.lbl = generateMetricLabel(gauge, cfg, dataAddress)
-		metricMap[pmetric.MetricTypeGauge] = gauge
-	}
-
-	if sumLen > 0 {
-		sum := &metricModelSum{
-			data: make([]*dMetricSum, 0, sumLen),
-		}
-		sum.lbl = generateMetricLabel(sum, cfg, dataAddress)
-		metricMap[pmetric.MetricTypeSum] = sum
-	}
-
-	if histogramLen > 0 {
-		histogram := &metricModelHistogram{
-			data: make([]*dMetricHistogram, 0, histogramLen),
-		}
-		histogram.lbl = generateMetricLabel(histogram, cfg, dataAddress)
-		metricMap[pmetric.MetricTypeHistogram] = histogram
-	}
-
-	if exponentialHistogramLen > 0 {
-		exponentialHistogram := &metricModelExponentialHistogram{
-			data: make([]*dMetricExponentialHistogram, 0, exponentialHistogramLen),
-		}
-		exponentialHistogram.lbl = generateMetricLabel(exponentialHistogram, cfg, dataAddress)
-		metricMap[pmetric.MetricTypeExponentialHistogram] = exponentialHistogram
-	}
-
-	if summaryLen > 0 {
-		summary := &metricModelSummary{
-			data: make([]*dMetricSummary, 0, summaryLen),
-		}
-		summary.lbl = generateMetricLabel(summary, cfg, dataAddress)
-		metricMap[pmetric.MetricTypeSummary] = summary
-	}
-
-	return metricMap
-}
-
 type metricsExporter struct {
 	*commonExporter
 }
@@ -174,8 +95,87 @@ func (e *metricsExporter) shutdown(_ context.Context) error {
 	return nil
 }
 
+func (e *metricsExporter) initMetricMap(ms pmetric.Metrics) map[pmetric.MetricType]metricModel {
+	metricMap := make(map[pmetric.MetricType]metricModel, 5)
+
+	gaugeLen := 0
+	sumLen := 0
+	histogramLen := 0
+	exponentialHistogramLen := 0
+	summaryLen := 0
+
+	rms := ms.ResourceMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rm := rms.At(i)
+		ilms := rm.ScopeMetrics()
+		for j := 0; j < ilms.Len(); j++ {
+			ilm := ilms.At(j)
+			ms := ilm.Metrics()
+			for k := 0; k < ms.Len(); k++ {
+				m := ms.At(k)
+				switch m.Type() {
+				case pmetric.MetricTypeGauge:
+					gaugeLen += m.Gauge().DataPoints().Len()
+				case pmetric.MetricTypeSum:
+					sumLen += m.Sum().DataPoints().Len()
+				case pmetric.MetricTypeHistogram:
+					histogramLen += m.Histogram().DataPoints().Len()
+				case pmetric.MetricTypeExponentialHistogram:
+					exponentialHistogramLen += m.ExponentialHistogram().DataPoints().Len()
+				case pmetric.MetricTypeSummary:
+					summaryLen += m.Summary().DataPoints().Len()
+				}
+			}
+		}
+	}
+
+	dataAddress := dataAddress(ms)
+
+	if gaugeLen > 0 {
+		gauge := &metricModelGauge{
+			data: make([]*dMetricGauge, 0, gaugeLen),
+		}
+		gauge.lbl = e.generateMetricLabel(gauge, dataAddress)
+		metricMap[pmetric.MetricTypeGauge] = gauge
+	}
+
+	if sumLen > 0 {
+		sum := &metricModelSum{
+			data: make([]*dMetricSum, 0, sumLen),
+		}
+		sum.lbl = e.generateMetricLabel(sum, dataAddress)
+		metricMap[pmetric.MetricTypeSum] = sum
+	}
+
+	if histogramLen > 0 {
+		histogram := &metricModelHistogram{
+			data: make([]*dMetricHistogram, 0, histogramLen),
+		}
+		histogram.lbl = e.generateMetricLabel(histogram, dataAddress)
+		metricMap[pmetric.MetricTypeHistogram] = histogram
+	}
+
+	if exponentialHistogramLen > 0 {
+		exponentialHistogram := &metricModelExponentialHistogram{
+			data: make([]*dMetricExponentialHistogram, 0, exponentialHistogramLen),
+		}
+		exponentialHistogram.lbl = e.generateMetricLabel(exponentialHistogram, dataAddress)
+		metricMap[pmetric.MetricTypeExponentialHistogram] = exponentialHistogram
+	}
+
+	if summaryLen > 0 {
+		summary := &metricModelSummary{
+			data: make([]*dMetricSummary, 0, summaryLen),
+		}
+		summary.lbl = e.generateMetricLabel(summary, dataAddress)
+		metricMap[pmetric.MetricTypeSummary] = summary
+	}
+
+	return metricMap
+}
+
 func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics) error {
-	metricMap := initMetricMap(e.cfg, md)
+	metricMap := e.initMetricMap(md)
 
 	for i := 0; i < md.ResourceMetrics().Len(); i++ {
 		resourceMetric := md.ResourceMetrics().At(i)
@@ -226,23 +226,26 @@ func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics
 	errMap := e.pushMetricDataParallel(ctx, metricMap)
 	var errs error
 	for _, m := range metricMap {
-		err := errMap[m.dataType()]
+		err := errMap[m.metricType()]
 		if err != nil {
-			addRetryData(m.dataType(), dataAddress, m.label())
+			e.addRetryData(dataAddress+m.tableSuffix(), m.label())
 			errs = errors.Join(errs, err)
 		}
 	}
 	return errs
 }
 
-func (e *metricsExporter) pushMetricDataParallel(ctx context.Context, metricMap map[pmetric.MetricType]metricModel) map[dataType]error {
-	errMap := make(map[dataType]error, len(metricMap))
+func (e *metricsExporter) pushMetricDataParallel(ctx context.Context, metricMap map[pmetric.MetricType]metricModel) map[pmetric.MetricType]error {
+	errMap := make(map[pmetric.MetricType]error)
+	for k := range metricMap {
+		errMap[k] = nil
+	}
 
 	wg := &sync.WaitGroup{}
 	for _, m := range metricMap {
 		wg.Add(1)
 		go func(m metricModel, wg *sync.WaitGroup) {
-			errMap[m.dataType()] = e.pushMetricDataInternal(ctx, m)
+			errMap[m.metricType()] = e.pushMetricDataInternal(ctx, m)
 			wg.Done()
 		}(m, wg)
 	}
@@ -329,4 +332,12 @@ func (e *metricsExporter) getExemplarValue(ep pmetric.Exemplar) float64 {
 		e.logger.Warn("exemplar value type is invalid, use 0.0 as default")
 		return 0.0
 	}
+}
+
+func (e *metricsExporter) generateMetricLabel(m metricModel, dataAddress string) string {
+	label := e.popRetryData(dataAddress + m.tableSuffix())
+	if label == "" {
+		label = generateLabel(e.cfg, e.cfg.Table.Metrics+m.tableSuffix())
+	}
+	return label
 }

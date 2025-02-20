@@ -111,10 +111,6 @@ func (m *metricModelHistogram) bytes() ([]byte, error) {
 	return toJSONLines(m.data)
 }
 
-func (m *metricModelHistogram) dataType() dataType {
-	return labelMetricHistogram
-}
-
 func (m *metricModelHistogram) label() string {
 	return m.lbl
 }

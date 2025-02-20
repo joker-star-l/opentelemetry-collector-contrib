@@ -91,10 +91,6 @@ func (m *metricModelSum) bytes() ([]byte, error) {
 	return toJSONLines(m.data)
 }
 
-func (m *metricModelSum) dataType() dataType {
-	return labelMetricSum
-}
-
 func (m *metricModelSum) label() string {
 	return m.lbl
 }

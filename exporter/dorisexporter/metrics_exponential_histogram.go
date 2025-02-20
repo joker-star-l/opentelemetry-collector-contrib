@@ -121,10 +121,6 @@ func (m *metricModelExponentialHistogram) bytes() ([]byte, error) {
 	return toJSONLines(m.data)
 }
 
-func (m *metricModelExponentialHistogram) dataType() dataType {
-	return labelMetricExponentialHistogram
-}
-
 func (m *metricModelExponentialHistogram) label() string {
 	return m.lbl
 }
