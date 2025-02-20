@@ -236,21 +236,27 @@ func (e *metricsExporter) pushMetricData(ctx context.Context, md pmetric.Metrics
 }
 
 func (e *metricsExporter) pushMetricDataParallel(ctx context.Context, metricMap map[pmetric.MetricType]metricModel) map[pmetric.MetricType]error {
-	errMap := make(map[pmetric.MetricType]error)
-	for k := range metricMap {
-		errMap[k] = nil
+	type entry struct {
+		k pmetric.MetricType
+		v error
 	}
 
+	errChan := make(chan *entry, len(metricMap))
 	wg := &sync.WaitGroup{}
 	for _, m := range metricMap {
 		wg.Add(1)
 		go func(m metricModel, wg *sync.WaitGroup) {
-			errMap[m.metricType()] = e.pushMetricDataInternal(ctx, m)
+			errChan <- &entry{k: m.metricType(), v: e.pushMetricDataInternal(ctx, m)}
 			wg.Done()
 		}(m, wg)
 	}
 	wg.Wait()
+	close(errChan)
 
+	errMap := make(map[pmetric.MetricType]error)
+	for kv := range errChan {
+		errMap[kv.k] = kv.v
+	}
 	return errMap
 }
 
