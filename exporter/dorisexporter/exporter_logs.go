@@ -94,7 +94,7 @@ func (e *logsExporter) shutdown(_ context.Context) error {
 }
 
 func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
-	label := popRetryData(labelLog, dataAddress(ld))
+	label := e.popRetryData(dataAddress(ld))
 	if label == "" {
 		label = generateLabel(e.cfg, e.cfg.Table.Logs)
 	}
@@ -144,7 +144,7 @@ func (e *logsExporter) pushLogData(ctx context.Context, ld plog.Logs) error {
 
 	err := e.pushLogDataInternal(ctx, logs, label)
 	if err != nil {
-		addRetryData(labelLog, dataAddress(ld), label)
+		e.addRetryData(dataAddress(ld), label)
 	}
 	return err
 }

@@ -81,7 +81,7 @@ func TestPushMetricData(t *testing.T) {
 }
 
 func TestPushMetricDataRetry(t *testing.T) {
-	testFunc := func(m pmetric.MetricType, dt dataType) {
+	testFunc := func(m pmetric.MetricType, tableSuffix string) {
 		port, err := findRandomPort()
 		require.NoError(t, err)
 
@@ -142,8 +142,8 @@ func TestPushMetricDataRetry(t *testing.T) {
 		metrics := simpleMetrics(10, map[pmetric.MetricType]struct{}{
 			m: {},
 		})
-		dataAddress := dataAddress(metrics)
-		_, ok := retryMaps[dt].Get(dataAddress)
+		dataAddress := dataAddress(metrics) + tableSuffix
+		_, ok := exporter.retryMap.Get(dataAddress)
 		require.False(t, ok)
 
 		err0 := fmt.Errorf("Not Started")
@@ -153,7 +153,7 @@ func TestPushMetricDataRetry(t *testing.T) {
 		}
 		require.True(t, isRetryError(err0))
 
-		label, ok := retryMaps[dt].Get(dataAddress)
+		label, ok := exporter.retryMap.Get(dataAddress)
 		require.True(t, ok)
 		require.NotEqual(t, "", label)
 
@@ -161,24 +161,24 @@ func TestPushMetricDataRetry(t *testing.T) {
 		err0 = exporter.pushMetricData(ctx, metrics)
 		require.True(t, isRetryError(err0))
 
-		labelRetry, ok := retryMaps[dt].Get(dataAddress)
+		labelRetry, ok := exporter.retryMap.Get(dataAddress)
 		require.True(t, ok)
 		require.Equal(t, label, labelRetry)
 
 		// second retry: success
 		err0 = exporter.pushMetricData(ctx, metrics)
 		require.NoError(t, err0)
-		_, ok = retryMaps[dt].Get(dataAddress)
+		_, ok = exporter.retryMap.Get(dataAddress)
 		require.False(t, ok)
 
 		_ = server.Shutdown(ctx)
 	}
 
-	testFunc(pmetric.MetricTypeGauge, labelMetricGauge)
-	testFunc(pmetric.MetricTypeSum, labelMetricSum)
-	testFunc(pmetric.MetricTypeHistogram, labelMetricHistogram)
-	testFunc(pmetric.MetricTypeExponentialHistogram, labelMetricExponentialHistogram)
-	testFunc(pmetric.MetricTypeSummary, labelMetricSummary)
+	testFunc(pmetric.MetricTypeGauge, "_gauge")
+	testFunc(pmetric.MetricTypeSum, "_sum")
+	testFunc(pmetric.MetricTypeHistogram, "_histogram")
+	testFunc(pmetric.MetricTypeExponentialHistogram, "_exponential_histogram")
+	testFunc(pmetric.MetricTypeSummary, "_summary")
 }
 
 func simpleMetrics(count int, typeSet map[pmetric.MetricType]struct{}) pmetric.Metrics {

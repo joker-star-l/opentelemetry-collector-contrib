@@ -134,7 +134,7 @@ func (e *tracesExporter) shutdown(_ context.Context) error {
 }
 
 func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) error {
-	label := popRetryData(labelTrace, dataAddress(td))
+	label := e.popRetryData(dataAddress(td))
 	if label == "" {
 		label = generateLabel(e.cfg, e.cfg.Table.Traces)
 	}
@@ -220,7 +220,7 @@ func (e *tracesExporter) pushTraceData(ctx context.Context, td ptrace.Traces) er
 
 	err := e.pushTraceDataInternal(ctx, traces, label)
 	if err != nil {
-		addRetryData(labelTrace, dataAddress(td), label)
+		e.addRetryData(dataAddress(td), label)
 	}
 	return err
 }

@@ -127,7 +127,7 @@ func TestPushTraceDataRetry(t *testing.T) {
 
 	traces := simpleTraces(10)
 	dataAddress := dataAddress(traces)
-	_, ok := retryMaps[labelTrace].Get(dataAddress)
+	_, ok := exporter.retryMap.Get(dataAddress)
 	require.False(t, ok)
 
 	err0 := fmt.Errorf("Not Started")
@@ -137,7 +137,7 @@ func TestPushTraceDataRetry(t *testing.T) {
 	}
 	require.True(t, isRetryError(err0))
 
-	label, ok := retryMaps[labelTrace].Get(dataAddress)
+	label, ok := exporter.retryMap.Get(dataAddress)
 	require.True(t, ok)
 	require.NotEqual(t, "", label)
 
@@ -145,14 +145,14 @@ func TestPushTraceDataRetry(t *testing.T) {
 	err0 = exporter.pushTraceData(ctx, traces)
 	require.True(t, isRetryError(err0))
 
-	labelRetry, ok := retryMaps[labelTrace].Get(dataAddress)
+	labelRetry, ok := exporter.retryMap.Get(dataAddress)
 	require.True(t, ok)
 	require.Equal(t, label, labelRetry)
 
 	// second retry: success
 	err0 = exporter.pushTraceData(ctx, traces)
 	require.NoError(t, err0)
-	_, ok = retryMaps[labelTrace].Get(dataAddress)
+	_, ok = exporter.retryMap.Get(dataAddress)
 	require.False(t, ok)
 
 	_ = server.Shutdown(ctx)
