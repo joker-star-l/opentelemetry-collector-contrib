@@ -1,5 +1,5 @@
 CREATE JOB `%s:%s_graph_job`
-ON SCHEDULE EVERY 1 MINUTE
+ON SCHEDULE EVERY 10 MINUTE
 DO
 INSERT INTO %s_graph
 SELECT
@@ -16,5 +16,5 @@ ON t1.trace_id = t2.trace_id
 AND t1.span_id != ''
 AND t1.service_name != t2.service_name
 AND t1.span_id = t2.parent_span_id
-AND t2.timestamp >= minutes_sub(date_trunc(now(), 'MINUTE'), 1)
+AND t2.timestamp >= minutes_sub(date_trunc(now(), 'MINUTE'), 10)
 GROUP BY timestamp, caller_service_name, caller_service_instance_id, callee_service_name, callee_service_instance_id;
