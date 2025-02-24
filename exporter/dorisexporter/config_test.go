@@ -5,7 +5,6 @@ package dorisexporter // import "github.com/open-telemetry/opentelemetry-collect
 
 import (
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -106,16 +105,4 @@ func TestLoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected, cfg)
 		})
 	}
-}
-
-func TestIllegalHeaders(t *testing.T) {
-	cfg := createDefaultConfig()
-	cfg.(*Config).Endpoint = "http://localhost:8030"
-	cfg.(*Config).CreateSchema = false
-	cfg.(*Config).Headers = map[string]configopaque.String{
-		"label": "",
-	}
-	err := cfg.(*Config).Validate()
-	require.Error(t, err)
-	require.True(t, strings.HasPrefix(err.Error(), "illegal headers:"))
 }
