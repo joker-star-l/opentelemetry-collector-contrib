@@ -115,6 +115,12 @@ func (e *tracesExporter) start(ctx context.Context, host component.Host) error {
 			return err
 		}
 
+		dropJob := e.formatDropTraceGraphJob()
+		_, err = conn.ExecContext(ctx, dropJob)
+		if err != nil {
+			e.logger.Warn("failed to drop job", zap.Error(err))
+		}
+
 		job := e.formatTraceGraphJob()
 		_, err = conn.ExecContext(ctx, job)
 		if err != nil {
@@ -270,6 +276,14 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 	}
 
 	return fmt.Errorf("failed to push trace data, response:%s", string(body))
+}
+
+func (e *tracesExporter) formatDropTraceGraphJob() string {
+	return fmt.Sprintf(
+		"DROP JOB where jobName = '%s:%s_graph_job';",
+		e.cfg.Database,
+		e.cfg.Table.Traces,
+	)
 }
 
 func (e *tracesExporter) formatTraceGraphJob() string {
