@@ -257,18 +257,15 @@ func (e *tracesExporter) pushTraceDataInternal(ctx context.Context, traces []*dT
 		e.reporter.incrTotalRows(int64(len(traces)))
 		e.reporter.incrTotalBytes(int64(len(marshal)))
 
+		if response.duplication() {
+			e.logger.Warn("label already exists", zap.String("label", label), zap.Int("skipped", len(traces)))
+		}
+
 		if e.cfg.LogResponse {
 			e.logger.Info("trace response:\n" + string(body))
 		} else {
 			e.logger.Debug("trace response:\n" + string(body))
 		}
-		return nil
-	}
-
-	if response.error() {
-		e.reporter.incrFailedRows(int64(len(traces)))
-
-		e.logger.Warn("failed to push trace data, response:\n" + string(body))
 		return nil
 	}
 

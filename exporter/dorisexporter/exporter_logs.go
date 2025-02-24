@@ -181,18 +181,15 @@ func (e *logsExporter) pushLogDataInternal(ctx context.Context, logs []*dLog, la
 		e.reporter.incrTotalRows(int64(len(logs)))
 		e.reporter.incrTotalBytes(int64(len(marshal)))
 
+		if response.duplication() {
+			e.logger.Warn("label already exists", zap.String("label", label), zap.Int("skipped", len(logs)))
+		}
+
 		if e.cfg.LogResponse {
 			e.logger.Info("log response:\n" + string(body))
 		} else {
 			e.logger.Debug("log response:\n" + string(body))
 		}
-		return nil
-	}
-
-	if response.error() {
-		e.reporter.incrFailedRows(int64(len(logs)))
-
-		e.logger.Warn("failed to push log data, response:\n" + string(body))
 		return nil
 	}
 

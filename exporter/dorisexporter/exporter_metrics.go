@@ -292,18 +292,15 @@ func (e *metricsExporter) pushMetricDataInternal(ctx context.Context, metrics me
 		e.reporter.incrTotalRows(int64(metrics.size()))
 		e.reporter.incrTotalBytes(int64(len(marshal)))
 
+		if response.duplication() {
+			e.logger.Warn("label already exists", zap.String("label", metrics.label()), zap.Int("skipped", metrics.size()))
+		}
+
 		if e.cfg.LogResponse {
 			e.logger.Info("metric response:\n" + string(body))
 		} else {
 			e.logger.Debug("metric response:\n" + string(body))
 		}
-		return nil
-	}
-
-	if response.error() {
-		e.reporter.incrFailedRows(int64(metrics.size()))
-
-		e.logger.Warn("failed to push metric data, response:\n" + string(body))
 		return nil
 	}
 
