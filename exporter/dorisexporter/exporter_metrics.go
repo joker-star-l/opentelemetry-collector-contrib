@@ -6,12 +6,12 @@ package dorisexporter // import "github.com/open-telemetry/opentelemetry-collect
 import (
 	"context"
 	_ "embed" // for SQL file embedding
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
 
+	"github.com/goccy/go-json"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"

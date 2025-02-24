@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/goccy/go-json v0.10.5
 	github.com/google/uuid v1.6.0
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	go.opentelemetry.io/collector/component/componenttest v0.116.0

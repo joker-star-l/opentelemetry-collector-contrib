@@ -7,13 +7,13 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // for register database driver
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"go.opentelemetry.io/collector/component"
