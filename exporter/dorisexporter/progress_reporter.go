@@ -15,7 +15,6 @@ type progressReporter struct {
 	name       string
 	totalBytes int64
 	totalRows  int64
-	failedRows int64
 	interval   time.Duration
 	logger     *zap.Logger
 }
@@ -25,7 +24,6 @@ func newProgressReporter(name string, interval int, logger *zap.Logger) *progres
 		name:       name,
 		totalBytes: 0,
 		totalRows:  0,
-		failedRows: 0,
 		interval:   time.Duration(interval) * time.Second,
 		logger:     logger,
 	}
@@ -36,10 +34,6 @@ func (reporter *progressReporter) incrTotalBytes(bytes int64) {
 }
 
 func (reporter *progressReporter) incrTotalRows(rows int64) {
-	atomic.AddInt64(&reporter.totalRows, rows)
-}
-
-func (reporter *progressReporter) incrFailedRows(rows int64) {
 	atomic.AddInt64(&reporter.totalRows, rows)
 }
 
