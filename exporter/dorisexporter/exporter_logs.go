@@ -6,7 +6,6 @@ package dorisexporter // import "github.com/open-telemetry/opentelemetry-collect
 import (
 	"context"
 	_ "embed" // for SQL file embedding
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -15,6 +14,7 @@ import (
 	semconv "go.opentelemetry.io/collector/semconv/v1.25.0"
 	"go.uber.org/zap"
 
+	"github.com/goccy/go-json"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/traceutil"
 )
 
