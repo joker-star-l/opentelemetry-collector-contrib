@@ -92,12 +92,11 @@ type streamLoadResponse struct {
 }
 
 func (r *streamLoadResponse) success() bool {
-	return r.Status == "Success" || r.Status == "Publish Timeout"
+	return r.Status == "Success" || r.Status == "Publish Timeout" || r.Status == "Label Already Exists"
 }
 
-// error but do not need to retry
-func (r *streamLoadResponse) error() bool {
-	return (r.Status == "Fail" && strings.HasPrefix(r.Message, "[DATA_QUALITY_ERROR]")) || r.Status == "Label Already Exists"
+func (r *streamLoadResponse) duplication() bool {
+	return r.Status == "Label Already Exists"
 }
 
 func streamLoadURL(address string, db string, table string) string {
