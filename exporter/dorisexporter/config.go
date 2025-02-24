@@ -4,7 +4,6 @@
 package dorisexporter // import "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/dorisexporter"
 
 import (
-	_ "embed" // for headers file embedding
 	"errors"
 	"fmt"
 	"regexp"
