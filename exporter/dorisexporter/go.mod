@@ -22,10 +22,11 @@ require (
 	github.com/goccy/go-json v0.10.5
 	github.com/google/uuid v1.6.0
 	github.com/orcaman/concurrent-map/v2 v2.0.1
-	go.opentelemetry.io/collector/component/componenttest v0.116.0
-	go.opentelemetry.io/collector/config/confighttp v0.116.0
-	go.opentelemetry.io/collector/exporter/exportertest v0.116.0
-	go.opentelemetry.io/collector/semconv v0.116.0
+	go.opentelemetry.io/collector/component/componenttest v0.120.1-0.20250224010654-18e18b21da7a
+	go.opentelemetry.io/collector/config/confighttp v0.120.1-0.20250224010654-18e18b21da7a
+	go.opentelemetry.io/collector/confmap/xconfmap v0.120.1-0.20250224010654-18e18b21da7a
+	go.opentelemetry.io/collector/exporter/exportertest v0.120.1-0.20250224010654-18e18b21da7a
+	go.opentelemetry.io/collector/semconv v0.120.1-0.20250224010654-18e18b21da7a
 )
 
 require (

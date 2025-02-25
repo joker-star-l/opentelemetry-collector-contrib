@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/goccy/go-json"
+
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/traceutil"
 )
 
