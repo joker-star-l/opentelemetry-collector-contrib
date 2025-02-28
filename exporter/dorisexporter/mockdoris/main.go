@@ -9,11 +9,10 @@ import (
 
 var port int
 
-func init() {
-	flag.IntVar(&port, "port", 8030, "The port server listens on")
-}
-
 func main() {
+	flag.IntVar(&port, "port", 8030, "The port server listens on")
+	flag.Parse()
+
 	r := gin.Default()
 	r.PUT("/api/:db/:table/_stream_load", func(c *gin.Context) {
 		c.JSON(200, gin.H{
