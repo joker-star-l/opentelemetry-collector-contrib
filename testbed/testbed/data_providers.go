@@ -86,8 +86,8 @@ func (dp *perfTestDataProvider) GenerateTraces() (ptrace.Traces, bool) {
 }
 
 func (dp *perfTestDataProvider) GenerateMetrics() (pmetric.Metrics, bool) {
-	// Generate 7 data points per metric.
-	const dataPointsPerMetric = 7
+	// Generate 1 data points per metric.
+	const dataPointsPerMetric = 1
 
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
